@@ -3,7 +3,7 @@
     "name": "Статистика",
     "version": "1.0.3",
 
-	"description": "Расширение считывающие количетво объявлений в очереди, через определенные промежутки времени",
+	"description": "Расширение считывающие количеcтво объявлений в очереди, через определенные промежутки времени",
 	
 	"icons": { 
         "16": "icon16.png",
@@ -18,7 +18,7 @@
     "browser_action": {
         "default_title": "Клик!",
         "default_icon": "icon16.png", 
-        "default_popup": "popup.html" 
+        "default_popup": "index.html" 
     },
         
     "permissions": [
