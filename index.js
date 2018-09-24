@@ -1,41 +1,3 @@
-// document.addEventListener('DOMContentLoaded', function () {
-//     var forms = document.getElementsByTagName("form");
-//     for (var i = 0; i < forms.length; i++) {
-//         (function () {
-//             var fr = forms[i];
-//             var location = fr.action;
-//             fr.onclick = function () {
-//                 chrome.tabs.create({active: true, url: location});
-//             };
-//         })();
-//     }
-//     var inputs = document.getElementsByTagName("input");
-//     var savedLgn = localStorage.getItem("chrExtLogin");
-//     var savedPss = localStorage.getItem("chrExtPassword");
-//     if(savedLgn !== "null"){
-//         document.getElementsByName("username")[0].value = savedLgn;
-//     }
-//     if(savedPss !== "null"){
-//         document.getElementsByName("cpasswd")[0].value = savedPss;
-//     }
-//     inputs[2].onclick = function(){
-//         if(document.getElementsByName("username")[0].value !== "" && savedLgn !== document.getElementsByName("username")[0].value){
-//             localStorage.setItem("chrExtLogin", document.getElementsByName("username")[0].value);
-//         } 
-        
-//         if(document.getElementsByName("cpasswd")[0].value !== "" && savedPss !== document.getElementsByName("cpasswd")[0].value){
-//             localStorage.setItem("chrExtPassword", document.getElementsByName("cpasswd")[0].value);
-//         }
-        
-//         if(document.getElementsByName("username")[0].value == "" || document.getElementsByName("cpasswd")[0].value == ""){
-//             alert("Сначала введите логин/пароль!");
-//         } else {
-//             window.close();
-//         }
-//     }
-// });
-
-
 chrome.runtime.sendMessage({ msg: 'getStatistics' });
 
 chrome.runtime.onMessage.addListener(req => {
@@ -46,67 +8,33 @@ chrome.runtime.onMessage.addListener(req => {
     }
 })
 
-/* 
-  <tr>
-    <th>Firstname</th>
-    <th>Lastname</th>
-    <th>Savings</th>
-  </tr>
-  <tr>
-    <td>Peter</td>
-    <td>Griffin</td>
-    <td>$100</td>
-  </tr> 
-*/
-
 function createTemplate(store) {
     const table = document.querySelector('table'),
         tableHeader = document.querySelector('.table-header'),
         keys = Object.keys(store),
-        intervals = getTime(keys)
-        headers = getHeaders(store, keys);
+        intervals = getIntervals(keys),
+        headers = getHeaders(keys, store);
 
-    addIntervalsToTable(intervals, table);
-    addHeadersToTable(headers, table);
-
-    // keys.forEach(key => {
-    //     const date = new Date(+key),
-    //         hours = date.getHours(),
-    //         minutes = date.getMinutes(),
-    //         timeNode = document.createElement('td'),
-    //         adsNode = document.createElement('td');
-
-    //     let dayNode = document.querySelector(`.day-${day}`);
-
-    //     if (!dayNode) {
-    //         dayNode = document.createElement('th');
-    //         dayNode.classList.add(`day-${day}`);
-    //         dayNode.textContent = day;
-    //         tableHeader.appendChild(dayNode);
-    //     }
-
-    //     timeNode.textContent = `${hours}:${minutes}`;
-    //     adsNode.textContent = store[key];
-
-    //     dayNode.appendChild(timeNode);
-    //     dayNode.appendChild(adsNode);
-    //     // table.appendChild(tr);
-    // })
+    console.log(headers)
+    renderIntervals(intervals, table);
+    renderHeaders(headers, tableHeader);
+    renderAmount(store, keys);
 }
 
-function getTime(keys) {
+function getIntervals(keys) {
     return keys.reduce((acc, key) => {
         const date = new Date(+key),
-            hours = date.getHours(),
-            minutes = date.getMinutes();
+            hours = date.getHours();
+        let minutes = date.getMinutes();
+
+        minutes = minutes < 10 ? `0${minutes}` : minutes;
         
         acc[`${hours}_${minutes}`] = `${hours}:${minutes}`;
-        
         return acc;
     }, {});
 }
 
-function addIntervalsToTable(intervals, table) {
+function renderIntervals(intervals, table) {
     Object.keys(intervals).forEach(key => {
         const tr = document.createElement('tr'),
             td = document.createElement('td');
@@ -119,8 +47,42 @@ function addIntervalsToTable(intervals, table) {
     })
 }
 
-function getHeaders(store, keys) {
-    return keys.filter(key => {
-        
-    })
+function getHeaders(keys, store) {
+    return Object.keys(
+        keys.reduce((acc, key) => {
+            const day = (new Date(+key)).getDate();
+            
+            !acc[day] ? acc[day] = [store[key]] : acc[day].push(store[key]);
+            
+            return acc;
+        }, {})
+    );
 }
+
+function renderHeaders(headers, tableHeader) {
+    /*
+        empty 'th' element for the first place in the table headers
+    */
+    tableHeader.appendChild(document.createElement('th')); 
+
+    headers.forEach(item => {
+        const th = document.createElement('th');
+
+        th.textContent = item;
+        tableHeader.appendChild(th);
+    });
+};
+
+function renderAmount(store, keys) {
+    keys.forEach(key => {
+        const date = new Date(+key),
+            hours = date.getHours(),
+            minutes = date.getMinutes(),
+            td = document.createElement('td'),
+            trClass = `.interval-${hours}_${minutes < 10 ? '0' + minutes : minutes}`,
+            tr = document.querySelector(trClass);
+        
+        td.textContent = store[key];
+        tr.appendChild(td);
+    })
+};
